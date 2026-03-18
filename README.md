@@ -717,6 +717,29 @@ pip install flask flask-limiter flask-mysqldb waitress geoip2 requests ip2region
 ```
 config/config.json
 ```
+配置
+```json
+{
+  "mysql": {                  #  数据库
+    "host": "",               #  数据库IP
+    "user": "",               #  数据库用户名
+    "password": "",           #  数据库密码
+    "database": "",           #  数据库名称
+    "port": 3306              #  数据库端口
+  },
+  "security": {               #  安全设置
+    "ban_duration": 86400     #  封禁基础时间
+  },
+  "flask": {                  #  Flask框架
+    "secret_key": ""          #  会话加密密钥
+  },
+  "geoip": {                  #  Geoip 
+    "account_id": "",         #  账户ID
+    "license_key": ""         #  许可证密钥
+  },
+  "root_super_admin": [""]    #  root用户
+}
+```
 
 ---
 
