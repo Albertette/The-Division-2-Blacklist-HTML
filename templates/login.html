@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>登录</title>
+<link rel="shortcut icon" href="/static/TCTD2_Icon_Phoenix_Secondary_Orange.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts-dp9.pages.dev/SmileySans-Oblique.ttf.woff2" rel="stylesheet">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background: radial-gradient(circle at top,#1b2735,#090a0f);
+font-family:'Segoe UI',sans-serif;
+overflow:hidden;
+}
+
+/* 呼吸光 */
+body::before{
+content:"";
+position:absolute;
+width:700px;
+height:700px;
+background:radial-gradient(circle,#ff7b00 0%,transparent 70%);
+opacity:0.12;
+animation:breath 6s ease-in-out infinite;
+}
+@keyframes breath{
+0%,100%{transform:scale(1);}
+50%{transform:scale(1.15);}
+}
+
+.card{
+width:380px;
+padding:45px 35px;
+border-radius:20px;
+backdrop-filter:blur(25px);
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+color:white;
+position:relative;
+transition:transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.card:hover{
+transform:translateY(-6px);
+box-shadow:0 10px 50px rgba(255,123,0,0.25);
+}
+
+h1{
+text-align:center;
+font-family:'Orbitron',sans-serif;
+margin-bottom:35px;
+color:#ff7b00;
+letter-spacing:3px;
+font-size:20px;
+}
+
+.input-group{
+position:relative;
+margin-bottom:25px;
+}
+
+.input-group input{
+width:100%;
+padding:14px 12px;
+background:transparent;
+border:1px solid rgba(255,255,255,0.3);
+border-radius:8px;
+color:white;
+font-size:14px;
+outline:none;
+transition:0.3s;
+height:46px;
+}
+
+.input-group input:focus{
+border-color:#ff7b00;
+box-shadow:0 0 12px rgba(255,123,0,0.6);
+}
+
+.input-group label{
+position:absolute;
+top:14px;
+left:12px;
+color:rgba(255,255,255,0.6);
+transition:0.3s;
+pointer-events:none;
+font-family: "Smiley Sans", sans-serif !important;
+}
+
+.input-group input:focus+label,
+.input-group input:not(:placeholder-shown)+label{
+top:-9px;
+left:8px;
+font-size:12px;
+background:#0f141a;
+padding:0 5px;
+color:#ff7b00;
+border-radius: 6px;
+font-family: "Smiley Sans", sans-serif !important;
+}
+
+.login-btn{
+width:100%;
+padding:14px;
+border:none;
+border-radius:8px;
+font-size:15px;
+cursor:pointer;
+color:white;
+background:linear-gradient(90deg,#ff7b00,#ff4500,#ff7b00);
+background-size:200%;
+transition:0.4s;
+position:relative;
+font-family: "Smiley Sans", sans-serif !important; /* 登录按钮文字用Smiley Sans */
+}
+
+.login-btn:hover{
+background-position:100%;
+box-shadow:0 5px 25px rgba(255,123,0,0.7);
+}
+
+.login-btn.loading{
+pointer-events:none;
+opacity:0.7;
+}
+.login-btn.loading::after{
+content:"";
+position:absolute;
+right:20px;
+top:50%;
+width:16px;
+height:16px;
+border:2px solid white;
+border-top:2px solid transparent;
+border-radius:50%;
+animation:spin 0.8s linear infinite;
+transform:translateY(-50%);
+}
+@keyframes spin{
+to{transform:translateY(-50%) rotate(360deg);}
+}
+
+/* ===== Toast（和 index 一样）===== */
+
+.toast{
+position:fixed;
+top:40px;
+left:50%;
+transform:translateX(-50%) translateY(-30px);
+min-width:280px;
+padding:16px 28px;
+border-radius:14px;
+backdrop-filter:blur(20px);
+background:rgba(20,30,40,0.9);
+border:1px solid rgba(255,255,255,0.15);
+color:white;
+font-size:14px;
+text-align:center;
+opacity:0;
+pointer-events:none;
+transition:all 0.4s ease;
+z-index:9999;
+}
+
+.toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+
+.toast.success{
+border-color:rgba(0,255,120,0.8);
+box-shadow:0 0 25px rgba(0,255,120,0.8);
+}
+
+.toast.error{
+border-color:rgba(255,70,70,0.8);
+box-shadow:0 0 20px rgba(255,70,70,0.6);
+}
+
+/* ===== 备案号统一样式 ===== */
+
+.beian{
+position:fixed;
+bottom:14px;
+left:50%;
+transform:translateX(-50%);
+font-size:12px;
+letter-spacing:0.5px;
+opacity:0.7;
+z-index:999;
+font-family: "Smiley Sans", sans-serif !important; /* 备案号文字用Smiley Sans */
+}
+
+.beian a{
+color:rgba(255,255,255,0.45);
+text-decoration:none;
+transition:0.25s;
+font-family: "Smiley Sans", sans-serif !important;
+}
+
+.beian a:hover{
+color:#ff7b00;
+text-shadow:0 0 6px rgba(255,123,0,0.6);
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h1>SYSTEM LOGIN</h1>
+
+<form action="/login_validation" method="post" onsubmit="return validateForm()">
+
+<input type="hidden" name="token" value="{{ session.token }}">
+
+<div class="input-group">
+<input type="text" id="account" name="account" required placeholder=" ">
+<label>账号</label>
+</div>
+
+<div class="input-group">
+<input type="password" id="password" name="password" required placeholder=" ">
+<label>密码</label>
+</div>
+
+<button type="submit" class="login-btn" id="loginBtn">登录系统</button>
+</form>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+<span id="toastMessage"></span>
+</div>
+
+<script>
+function validateForm(){
+    var account=document.getElementById("account").value;
+    var password=document.getElementById("password").value;
+
+    if(account.length<4){
+        showToast("账号格式不正确","error");
+        return false;
+    }
+
+    if(password.length<6){
+        showToast("密码长度至少为6位","error");
+        return false;
+    }
+
+    document.getElementById("loginBtn").classList.add("loading");
+    return true;
+}
+
+function showToast(message,type="success"){
+    const toast=document.getElementById("toast");
+    const text=document.getElementById("toastMessage");
+    toast.classList.remove("success","error");
+    toast.classList.add(type);
+    text.innerText=message;
+    toast.classList.add("show");
+    setTimeout(()=>{toast.classList.remove("show");},3000);
+}
+</script>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<script>
+window.onload=function(){
+
+    const message="{{ messages[0] }}";
+    const type= message.includes("成功") ? "success" : "error";
+
+    showToast(message,type);
+
+    // 如果是登录成功，延迟跳转
+    if(type==="success"){
+        setTimeout(()=>{
+            // 页面淡出效果（不破坏你的UI）
+            document.body.style.transition="opacity 0.5s ease";
+            document.body.style.opacity="0";
+            setTimeout(()=>{
+                window.location.href="/";
+            },500);
+        },1500);
+    }
+}
+</script>
+{% endif %}
+{% endwith %}
+
+<!-- 🔥 这个必须永远存在，不能放进 if -->
+<script>
+/* ===== 修复浏览器返回导致按钮卡死 ===== */
+
+window.addEventListener("pageshow", function(event){
+    const btn = document.getElementById("loginBtn");
+    if(btn){
+        btn.classList.remove("loading");
+    }
+});
+
+// 保险兜底
+window.addEventListener("DOMContentLoaded", function(){
+    const btn = document.getElementById("loginBtn");
+    if(btn){
+        btn.classList.remove("loading");
+    }
+});
+</script>
+
+<div class="beian">
+<a href="https://beian.miit.gov.cn/" target="_blank">
+备案号：沪ICP备2024085005号-1
+</a>
+</div>
+
+</body>
+</html>

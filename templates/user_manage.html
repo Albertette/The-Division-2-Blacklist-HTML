@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>用户管理 - TD2 BLACKLIST SYSTEM</title>
+
+<link rel="shortcut icon" href="/static/TCTD2_Icon_Phoenix_Secondary_Orange.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+
+<style>
+
+
+
+/* 全局风格统一：复用原有暗黑科技风 */
+body {
+    background: radial-gradient(circle at top,#1b2735,#090a0f);
+    font-family: "Smiley Sans", 'Segoe UI', sans-serif;
+    height: 100vh;
+    padding: 40px;
+    color:white;
+    margin:0;
+    overflow: hidden; /* 禁止页面整体滚动 */
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+/* 纯英文/数字用科技字体 */
+.label[english], .value[english], .btn[english], .page[english], .title {
+    font-family: 'Orbitron', "Smiley Sans", sans-serif;
+}
+
+/* 顶部固定区域（标题+按钮+搜索） */
+.top-fixed-area {
+    flex-shrink: 0;
+}
+
+.title {
+    color:#ff7b00;
+    font-size:22px;
+    margin-bottom:30px;
+}
+
+/* 用户面板：右上角 */
+.user-panel{
+    position:absolute;
+    top:20px;
+    right:30px;
+    color:rgba(255,255,255,0.8);
+    font-size:13px;
+    z-index:10;
+}
+.user-panel a{
+    color:#ff7b00;
+    text-decoration:none;
+    margin-left:12px;
+}
+
+/* 普通用户页面权限动画 */
+.role-pages-group{
+    opacity:1;
+    max-height:80px;
+    overflow:hidden;
+    transition:
+        opacity 0.35s ease,
+        max-height 0.35s ease;
+}
+
+/* 隐藏状态 */
+.role-pages-group.hide{
+    opacity:0;
+    max-height:0;
+    pointer-events:none;
+}
+
+
+/* 卡片基础样式（统一风格） */
+.card {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,123,0,0.3);
+    border-radius:12px;
+    padding:20px;
+    transition:0.25s;
+    animation:fadeUp .4s ease;
+    box-sizing: border-box;
+}
+.card:hover {
+    transform:translateY(-4px);
+    border-color:#ff7b00;
+    box-shadow:0 12px 25px rgba(255,123,0,.35);
+}
+@keyframes fadeUp {
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
+}
+
+/* 新增：搜索筛选容器样式 - 单行布局 */
+.search-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* 新增：搜索框样式（匹配原有表单风格，占主要宽度） */
+.search-input {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: none;
+    background: #111;
+    color: white;
+    font-family: "Smiley Sans", sans-serif;
+    box-sizing: border-box;
+    flex: 1; /* 占满剩余宽度 */
+    min-width: 200px;
+    transition: 0.25s;
+    border: 1px solid transparent;
+}
+.search-input:focus {
+    outline: none;
+    border-color: #ff7b00;
+    box-shadow: 0 0 10px rgba(255,123,0,0.3);
+}
+
+/* 自定义下拉框样式（完全复刻 record.html） */
+.custom-select {
+    position: relative;
+    cursor: pointer;
+    width: 180px;
+}
+.select-display {
+    width: 100%;
+    padding: 12px 15px;
+    background: #111;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    transition: 0.25s;
+    display: flex;
+    align-items: center;
+    height: 46px;
+    font-family: "Smiley Sans", sans-serif;
+    box-sizing: border-box;
+}
+.select-display.active {
+    border-color: #ff7b00;
+    box-shadow: 0 0 10px rgba(255,123,0,0.3);
+}
+.select-options {
+    position: absolute;
+    top: 105%;
+    width: 100%;
+    background: rgba(20,30,40,0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    z-index: 9999;
+    /* 👇 新增：隐藏滚动条（兼容主流浏览器） */
+    overflow-y: auto; /* 保留滚动功能 */
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+}
+/* 👇 新增：Chrome/Safari 隐藏滚动条 */
+.select-options::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+.select-options.open {
+    max-height: 220px;
+    overflow-y: auto;
+}
+.select-options div {
+    padding: 12px;
+    transition: 0.2s;
+    font-family: "Smiley Sans", sans-serif;
+}
+.select-options div:hover {
+    background: #ff7b00;
+    color: black;
+}
+
+/* 弹窗内自定义下拉宽度适配 */
+.modal .custom-select {
+    width: 100%;
+}
+.modal .select-display {
+    height: auto;
+    padding: 12px;
+}
+
+/* 创建用户弹窗 */
+.create-user-modal {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(5px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.3s ease;
+}
+.create-user-modal.show {
+    opacity:1;
+    pointer-events:auto;
+}
+.create-user-card {
+    width:100%;
+    max-width:450px;
+    margin:0 20px;
+    position: relative;
+}
+
+/* 统一所有弹窗外层遮罩 */
+.modal {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.7);
+    backdrop-filter:blur(5px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    opacity:0;
+    pointer-events:none;
+    transition:0.3s;
+}
+.modal.show {
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* 弹窗内容样式统一 */
+.modal-content {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,123,0,0.3);
+    border-radius:12px;
+    padding:30px;
+    width:500px;
+    max-width:90%;
+    transform:translateY(-20px);
+    transition:0.3s;
+    position:relative;
+}
+.modal.show .modal-content {
+    transform:translateY(0);
+}
+.modal-content:hover {
+    border-color:#ff7b00;
+    box-shadow:0 12px 25px rgba(255,123,0,.35);
+}
+
+.modal-close {
+    position:absolute;
+    top:20px;
+    right:20px;
+    color:#ff7b00;
+    font-size:20px;
+    cursor:pointer;
+}
+
+/* 表单样式 */
+.form-group {
+    margin-bottom:15px;
+}
+.form-group label {
+    display:block;
+    color:#ff7b00;
+    font-size:13px;
+    margin-bottom:8px;
+}
+input, select, textarea {
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    background:#111;
+    color:white;
+    font-family: "Smiley Sans", sans-serif;
+    box-sizing: border-box;
+}
+.checkbox-group {
+    display:flex;
+    gap:25px;
+    flex-wrap:nowrap;
+    align-items:center;
+    margin-top:8px;
+}
+.checkbox-item {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+    font-size:14px;
+}
+.checkbox-item input {
+    width:auto;
+    height:16px;
+    width:16px;
+}
+
+/* 按钮样式 + 按钮之间自动拉开距离 */
+.btn {
+    padding:10px 20px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+    transition:0.25s;
+    font-family: "Smiley Sans", sans-serif;
+    font-weight:600;
+    margin: 0 6px 8px 0; /* 按钮自动间距 */
+}
+.btn-primary {
+    background:linear-gradient(135deg,#ff7b00,#ffb347);
+    color:black;
+}
+.btn-primary:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 15px rgba(255,123,0,.4);
+    background:linear-gradient(135deg,#ff9500,#ffcc80);
+}
+/* 新增：解除封禁按钮绿色样式 */
+.btn-unban {
+    background:linear-gradient(135deg,#4CAF50,#81C784);
+    color:black;
+}
+.btn-unban:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 15px rgba(76,175,80,.4);
+    background:linear-gradient(135deg,#66BB6A,#A5D6A7);
+}
+.btn-danger {
+    background:linear-gradient(135deg,#b22222,#dc143c);
+    color:white;
+}
+.btn-danger:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 15px rgba(178,34,34,.4);
+}
+/* 新增：删除按钮样式（加深红色，区分危险操作） */
+.btn-delete {
+    background:linear-gradient(135deg,#990000,#cc0000);
+    color:white;
+}
+.btn-delete:hover {
+    transform:translateY(-2px);
+    box-shadow:0 6px 15px rgba(153,0,0,.5);
+}
+.btn-disabled {
+    background:#666;
+    color:white;
+    cursor:not-allowed;
+    transform:none;
+    box-shadow:none;
+}
+.close-btn {
+    position:absolute;
+    top:15px;
+    right:15px;
+    background:transparent;
+    border:none;
+    color:#ff7b00;
+    font-size:20px;
+    cursor:pointer;
+    padding:5px;
+}
+.close-btn:hover {
+    color:#ff9500;
+}
+
+/* ===== 表格区域：标题栏+表头固定，仅表体滚动 ===== */
+.table-wrapper {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+/* 表格容器：固定表头，滚动表体 */
+.table-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    /* 隐藏滚动条 */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.table-container::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    table-layout: fixed; /* 固定列宽，保证表头对齐 */
+}
+
+/* 表头固定在顶部 */
+thead {
+    position: sticky;
+    top: 0;
+    background: radial-gradient(circle at top,#1b2735,#090a0f);
+    z-index: 1;
+}
+
+th, td {
+    padding:12px 15px;
+    text-align:left;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+    white-space: nowrap; /* 表格文字不换行 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+th {
+    color:#ff7b00;
+    font-family: 'Orbitron', sans-serif;
+}
+tr:hover {
+    background:rgba(255,255,255,0.03);
+}
+
+/* 标签 */
+.tag {
+    padding:4px 8px;
+    border-radius:4px;
+    font-size:12px;
+}
+.tag-normal {
+    background:#4CAF50;
+    color:white;
+}
+.tag-admin {
+    background:#ff7b00;
+    color:black;
+}
+.tag-super {
+    background:#b22222;
+    color:white;
+}
+.tag-banned {
+    background:#dc143c;
+    color:white;
+}
+
+/* 自定义Toast提示（增强科技风） */
+.toast{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translate(-50%, -50px);
+    background:rgba(0,0,0,0.9);
+    border:1px solid rgba(255,123,0,0.4);
+    color:white;
+    padding:15px 30px;
+    border-radius:10px;
+    border-left:4px solid #ff7b00;
+    opacity:0;
+    transition:all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    z-index:9999;
+    font-family: "Smiley Sans", sans-serif;
+    box-shadow:0 8px 30px rgba(255,123,0,0.2);
+    backdrop-filter:blur(10px);
+}
+.toast.show{
+    opacity:1;
+    transform:translate(-50%, 0);
+}
+.toast.error {
+    border-left-color:#dc143c;
+    border-color:rgba(220,20,60,0.4);
+    box-shadow:0 8px 30px rgba(220,20,60,0.2);
+}
+.toast.success {
+    border-left-color:#4CAF50;
+    border-color:rgba(76,175,80,0.4);
+    box-shadow:0 8px 30px rgba(76,175,80,0.2);
+}
+
+/* 自定义确认弹窗样式 */
+.confirm-modal {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    background:rgba(0,0,0,0.8);
+    backdrop-filter:blur(8px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:99999;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.3s ease;
+}
+.confirm-modal.show {
+    opacity:1;
+    pointer-events:auto;
+}
+.confirm-content {
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,123,0,0.3);
+    border-radius:12px;
+    padding:30px;
+    width:400px;
+    max-width:90%;
+    transform:translateY(-20px) scale(0.95);
+    transition:all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    position:relative;
+}
+.confirm-modal.show .confirm-content {
+    transform:translateY(0) scale(1);
+    border-color:rgba(255,123,0,0.5);
+    box-shadow:0 15px 40px rgba(255,123,0,0.3);
+}
+.confirm-title {
+    color:#ff7b00;
+    font-size:18px;
+    margin:0 0 15px 0;
+    font-family: 'Orbitron', sans-serif;
+}
+.confirm-message {
+    color:rgba(255,255,255,0.9);
+    line-height:1.6;
+    margin-bottom:25px;
+    font-size:14px;
+}
+.confirm-buttons {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
+/* ===== 自定义日期日历（适配封禁弹窗）===== */
+.date-wrapper{position:relative;}
+.ban-date-input {
+    background: #111 !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    color: white !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+.calendar{
+    position:absolute;
+    top:110%;
+    /* 关键修改：宽度和输入框一致 */
+    width: 100%;
+    box-sizing: border-box;
+    background:rgba(15,20,25,0.95);
+    backdrop-filter:blur(20px);
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 0 30px rgba(0,0,0,0.7);
+    padding:15px;
+    display:none;
+    z-index:1000;
+}
+/* 日历头部数字（年月）用科技字体 */
+.calendar-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+    color:#ff7b00;
+    font-size:14px;
+    font-family: 'Orbitron', sans-serif !important;
+}
+.calendar-header button{
+    background:none;
+    border:none;
+    color:#ff7b00;
+    font-size:16px;
+    cursor:pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+/* 日历日期数字用科技字体 */
+.calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+    font-size:13px;
+    text-align:center;
+    font-family: 'Orbitron', sans-serif !important;
+    /* 确保网格不会超出容器 */
+    width: 100%;
+    box-sizing: border-box;
+}
+.calendar-day{
+    padding:8px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.2s;
+    font-family: 'Orbitron', sans-serif !important;
+    /* 让日期格子自适应宽度 */
+    min-width: 0;
+}
+.calendar-day:hover{
+    background:#ff7b00;
+    color:black;
+}
+.calendar-day.disabled{
+    opacity:0.3;
+    pointer-events:none;
+}
+.calendar-day.selected{
+    background:#ff7b00;
+    color:black;
+    box-shadow:0 0 10px rgba(255,123,0,0.8);
+}
+
+/* 备案 */
+.beian{
+    margin-top:20px;
+    padding:10px 0 10px 0;
+    text-align:center;
+    font-size:12px;
+    letter-spacing:0.5px;
+    opacity:0.7;
+    flex-shrink: 0;
+}
+.beian a{
+    color:rgba(255,255,255,0.45);
+    text-decoration:none;
+    transition:0.25s;
+}
+.beian a:hover{
+    color:#ff7b00;
+    text-shadow:0 0 6px rgba(255,123,0,0.6);
+}
+
+/* 新增：密码修改选项样式 */
+.password-toggle-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #ff7b00;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+.password-toggle-option:hover {
+    color: #ff9500;
+}
+.password-input-group {
+    display: none;
+}
+.password-input-group.show {
+    display: block;
+}
+</style>
+</head>
+<body>
+
+<div class="user-panel">
+当前用户：{{ current_account }}
+<span style="color: {{ '#b22222' if current_role == 'super_admin' else '#ff7b00' }}">
+    {{ '（超级管理员）' if current_role == 'super_admin' else '（管理员）' }}
+</span>
+<a href="/logout">退出登录</a>
+<a href="/" style="color:#ff7b00">返回首页</a>
+<a href="/admin/user_manage" style="color:#ff7b00">刷新列表</a>
+</div>
+
+<div class="top-fixed-area">
+    <div class="title english">USER MANAGEMENT SYSTEM</div>
+
+    <button class="btn btn-primary" onclick="toggleAddCard()" style="margin-bottom:20px;">
+    ➕ 创建用户
+    </button>
+
+    <!-- 优化：搜索和筛选容器 - 单行布局，搜索框占主要宽度，筛选框固定宽度 -->
+    <div class="search-filter-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="搜索用户名（不区分大小写）" oninput="filterAndRenderUsers()">
+
+        <!-- 角色筛选下拉（复刻record样式） -->
+        <div class="custom-select" id="roleSelect">
+            <input type="hidden" id="roleFilterValue" value="all">
+            <div class="select-display" id="roleSelectDisplay">全部角色</div>
+            <div class="select-options" id="roleSelectOptions">
+                <div data-value="all">全部角色</div>
+                <div data-value="super_admin">超级管理员</div>
+                <div data-value="admin">管理员</div>
+                <div data-value="normal">普通用户</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 表格区域：标题栏+表头固定，仅表体滚动 -->
+<div class="table-wrapper">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>账号</th>
+                    <th>角色</th>
+                    <th>允许访问页面</th>
+                    <th>封禁状态</th>
+                    <th>封禁过期时间</th>
+                    <th>封禁人</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 下面所有弹窗、JS代码保持不变，直接复制即可 -->
+<div class="create-user-modal" id="createUserModal">
+    <div class="card create-user-card">
+        <button class="close-btn" onclick="toggleAddCard()">×</button>
+        <h3 style="margin-top:0;color:#ff7b00;">添加新用户</h3>
+        <div class="form-group">
+            <label>账号</label>
+            <input type="text" id="addAccount" placeholder="输入用户名">
+            <div class="form-error" id="errorAccount"></div>
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="addPassword" placeholder="输入密码">
+            <div class="form-error" id="errorPassword"></div>
+        </div>
+        <div class="form-group">
+            <label>用户角色</label>
+            <!-- 添加用户角色下拉 -->
+            <div class="custom-select" id="addRoleSelect">
+                <input type="hidden" id="addRoleValue" {{ 'disabled' if current_role == 'admin' }}>
+                <div class="select-display" id="addRoleDisplay">普通用户</div>
+                <div class="select-options" id="addRoleOptions">
+                    <div data-value="normal">普通用户</div>
+                    {% if current_role == 'super_admin' %}
+                    <div data-value="admin">管理员</div>
+                    {% endif %}
+                    {% if is_root_admin %}
+                    <div data-value="super_admin">超级管理员</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="form-group role-pages-group">
+            <label>允许访问的页面（仅普通用户）</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="pageSearch" value="search.html">
+                    <label for="pageSearch">搜索页面</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="pageRecord" value="record.html">
+                    <label for="pageRecord">提交页面</label>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="addUser()">创建用户</button>
+    </div>
+</div>
+
+<!-- 封禁用户弹窗 -->
+<div class="modal" id="banModal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('banModal')">×</span>
+        <h3 style="color:#ff7b00;">封禁用户</h3>
+        <input type="hidden" id="banTargetAccount">
+        <div class="form-group">
+            <label>封禁类型</label>
+            <!-- 封禁类型自定义下拉 -->
+            <div class="custom-select" id="banTypeSelect">
+                <input type="hidden" id="banTypeValue">
+                <div class="select-display" id="banTypeDisplay">1天</div>
+                <div class="select-options" id="banTypeOptions">
+                    <div data-value="1天">1天</div>
+                    <div data-value="7天">7天</div>
+                    <div data-value="30天">30天</div>
+                    <div data-value="自定义日期">自定义到期日期</div>
+                    <div data-value="永久">永久封禁</div>
+                </div>
+            </div>
+        </div>
+        <!-- 替换自定义天数为日期选择器 -->
+        <div class="form-group" id="banDateGroup" style="display:none;">
+            <label>封禁到期日期</label>
+            <div class="date-wrapper">
+                <input type="text" id="banExpireDate" class="ban-date-input" readonly placeholder="选择日期">
+                <div class="calendar" id="banCalendar"></div>
+            </div>
+            <div class="form-error" id="errorBanDate"></div>
+        </div>
+        <div class="form-group">
+            <label>封禁原因</label>
+            <input type="text" id="banReason" placeholder="输入封禁原因">
+            <div class="form-error" id="errorBanReason"></div>
+        </div>
+        <button class="btn btn-danger" onclick="banUser()">确认封禁</button>
+    </div>
+</div>
+
+<!-- 超级管理员专用：调整角色弹窗（含删除功能） -->
+{% if current_role == 'super_admin' %}
+<div class="modal" id="roleModal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('roleModal')">×</span>
+        <h3 style="color:#ff7b00;">调整用户角色</h3>
+        <input type="hidden" id="roleTargetAccount">
+        <div class="form-group">
+            <label>新角色</label>
+            <!-- 调整角色下拉 -->
+            <div class="custom-select" id="newRoleSelect">
+                <input type="hidden" id="newRoleValue">
+                <div class="select-display" id="newRoleDisplay">普通用户</div>
+                <div class="select-options" id="newRoleOptions">
+                    <div data-value="normal">普通用户</div>
+                    <div data-value="admin">管理员</div>
+                    {% if is_root_admin %}
+                    <div data-value="super_admin">超级管理员</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="form-group role-pages-group hide" id="rolePagesGroup">
+            <label>允许访问的页面（仅普通用户）</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="rolePageSearch" value="search.html">
+                    <label for="rolePageSearch">搜索页面</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="rolePageRecord" value="record.html">
+                    <label for="rolePageRecord">提交页面</label>
+                </div>
+            </div>
+            <div class="form-error" id="errorRolePages"></div>
+        </div>
+
+        <!-- 新增：密码修改选项（点击才显示输入框） -->
+        <div class="form-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="password-toggle-option" onclick="togglePasswordInput()">
+                <input type="checkbox" id="changePasswordToggle" style="width: auto; height: 16px;">
+                <span>修改密码</span>
+            </div>
+            <div class="password-input-group" id="passwordInputGroup">
+                <input type="password" id="newPassword" placeholder="输入新密码">
+                <input type="password" id="confirmPassword" placeholder="确认新密码" style="margin-top: 8px;">
+                <div class="form-error" id="errorPassword"></div>
+            </div>
+        </div>
+
+        <!-- 新增：删除账户按钮（仅超级管理员可见） -->
+        <div style="margin-top: 15px;">
+            <button class="btn btn-primary" onclick="changeRole()">确认修改</button>
+            <button class="btn btn-delete" onclick="deleteAccount()">删除账户</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 普通管理员专用：调整页面权限弹窗 -->
+<div class="modal" id="pagePermissionModal">
+    <div class="modal-content">
+        <span class="modal-close" onclick="closeModal('pagePermissionModal')">×</span>
+        <h3 style="color:#ff7b00;">调整页面访问权限</h3>
+        <input type="hidden" id="permTargetAccount">
+        <div class="form-group">
+            <label>允许访问的页面</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="permPageSearch" value="search.html">
+                    <label for="permPageSearch">搜索页面</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="permPageRecord" value="record.html">
+                    <label for="permPageRecord">提交页面</label>
+                </div>
+            </div>
+            <div class="form-error" id="errorPermPages"></div>
+        </div>
+        <button class="btn btn-primary" onclick="savePagePermissions()">确认修改</button>
+    </div>
+</div>
+
+<!-- 自定义确认弹窗 -->
+<div class="confirm-modal" id="customConfirmModal">
+    <div class="confirm-content">
+        <h3 class="confirm-title" id="confirmTitle">确认操作</h3>
+        <div class="confirm-message" id="confirmMessage"></div>
+        <div class="confirm-buttons">
+            <button class="btn btn-primary" onclick="confirmCallback(false)">取消</button>
+            <button class="btn btn-danger" onclick="confirmCallback(true)">确认</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div class="beian">
+<a href="https://beian.miit.gov.cn/" target="_blank">备案号：沪ICP备2024085005号-1</a>
+</div>
+
+<script>
+const currentRole = "{{ current_role }}";
+const currentAccount = "{{ current_account }}";
+let userList = [];
+let confirmResolve;
+let banCalendarCurrent = new Date();
+
+const pageNameMap = {
+    "search.html": "搜索页面",
+    "record.html": "提交页面"
+};
+
+// 隐藏所有表单错误提示
+function hideAllFormErrors() {
+    document.querySelectorAll('.form-error').forEach(el => {
+        el.classList.remove('show');
+        el.textContent = '';
+    });
+}
+
+// 显示表单错误提示
+function showFormError(id, message) {
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.classList.add('show');
+}
+
+function toggleAddCard() {
+    const modal = document.getElementById("createUserModal");
+    if (modal.classList.contains("show")) {
+        modal.classList.remove("show");
+        hideAllFormErrors();
+    } else {
+        modal.classList.add("show");
+        document.getElementById("addAccount").value = "";
+        document.getElementById("addPassword").value = "";
+        document.getElementById("pageSearch").checked = false;
+        document.getElementById("pageRecord").checked = false;
+        hideAllFormErrors();
+        // 👇 修复：强制设置默认角色为普通用户，并立即显示权限选项
+        document.getElementById("addRoleValue").value = "normal";
+        document.getElementById("addRoleDisplay").innerText = "普通用户";
+        toggleAddRolePages(); // 立即执行显示
+    }
+}
+
+// 新增：切换密码输入框显示/隐藏
+function togglePasswordInput() {
+    const toggle = document.getElementById('changePasswordToggle');
+    const passwordGroup = document.getElementById('passwordInputGroup');
+
+    if (toggle.checked) {
+        passwordGroup.classList.add('show');
+    } else {
+        passwordGroup.classList.remove('show');
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        hideAllFormErrors();
+    }
+}
+
+window.onload = function() {
+    loadUserList();
+    initBanCalendar();
+    initAllCustomSelects(); // 初始化所有自定义下拉
+};
+
+// 初始化所有自定义下拉框
+function initAllCustomSelects() {
+    // 角色筛选下拉
+    initCustomSelect("roleSelect", filterAndRenderUsers);
+
+    // 添加用户角色下拉
+    initCustomSelect("addRoleSelect", function() {
+        toggleAddRolePages();
+        const val = document.getElementById("addRoleValue").value;
+        if (val === "admin" || val === "super_admin") {
+            document.getElementById("pageSearch").checked = false;
+            document.getElementById("pageRecord").checked = false;
+        }
+    });
+
+    // 封禁类型下拉
+    initCustomSelect("banTypeSelect", function() {
+        toggleBanDate();
+    });
+
+    // 调整角色下拉
+    initCustomSelect("newRoleSelect", function() {
+        toggleRolePages();
+    });
+
+    // 设置默认值
+    document.getElementById("banTypeValue").value = "1天";
+    document.getElementById("banTypeDisplay").innerText = "1天";
+}
+
+// 通用自定义下拉初始化函数
+function initCustomSelect(selectId, onChangeCallback) {
+    const select = document.getElementById(selectId);
+    const display = select.querySelector(".select-display");
+    const options = select.querySelector(".select-options");
+    const valueInput = select.querySelector("input[type='hidden']");
+    const optionItems = options.querySelectorAll("div");
+
+    // 点击展开/收起
+    display.addEventListener("click", (e) => {
+        e.stopPropagation();
+        options.classList.toggle("open");
+        display.classList.toggle("active");
+    });
+
+    // 选择选项
+    optionItems.forEach(item => {
+        item.addEventListener("click", () => {
+            const val = item.dataset.value;
+            const text = item.innerText;
+            valueInput.value = val;
+            display.innerText = text;
+            options.classList.remove("open");
+            display.classList.remove("active");
+
+            if (onChangeCallback) onChangeCallback(val);
+        });
+    });
+
+    // 点击外部关闭
+    document.addEventListener("click", (e) => {
+        if (!select.contains(e.target)) {
+            options.classList.remove("open");
+            display.classList.remove("active");
+        }
+    });
+}
+
+function loadUserList() {
+    fetch("/api/get_all_users")
+    .then(r => {
+        if (!r.ok) throw new Error(`接口错误：${r.status}`);
+        return r.json();
+    })
+    .then(data => {
+        userList = data;
+        sortUsersByRole();
+        filterAndRenderUsers();
+    })
+    .catch(err => {
+        showToast("加载用户列表失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 新增：按角色优先级排序（超级管理员 > 管理员 > 普通用户）
+function sortUsersByRole() {
+    userList.sort((a, b) => {
+        const rolePriority = {
+            'super_admin': 3,
+            'admin': 2,
+            'normal': 1
+        };
+        return rolePriority[b.role] - rolePriority[a.role];
+    });
+}
+
+// 筛选并渲染用户列表
+function filterAndRenderUsers() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+    const selectedRole = document.getElementById('roleFilterValue').value;
+
+    let filteredUsers = userList.filter(user => {
+        const matchesSearch = user.account.toLowerCase().includes(searchText);
+        const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+        return matchesSearch && matchesRole;
+    });
+
+    renderUserTable(filteredUsers);
+}
+
+// 渲染用户表格
+function renderUserTable(filteredUsers = userList) {
+    const tbody = document.getElementById("userTableBody");
+    tbody.innerHTML = "";
+    if (filteredUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,0.5)">暂无用户数据</td></tr>`;
+        return;
+    }
+    filteredUsers.forEach(user => {
+        let roleTag = "";
+        if (user.role === "normal") roleTag = `<span class="tag tag-normal">普通用户</span>`;
+        else if (user.role === "admin") roleTag = `<span class="tag tag-admin">管理员</span>`;
+        else if (user.role === "super_admin") roleTag = `<span class="tag tag-super">超级管理员</span>`;
+
+        let banStatus = user.ban_status ? `<span class="tag tag-banned">已封禁</span>` : `<span style="color:#4CAF50">正常</span>`;
+
+        let allowedPages = "";
+        if (user.allowed_pages && user.allowed_pages.length > 0) {
+            allowedPages = user.allowed_pages.map(page => pageNameMap[page] || page).join("、");
+        } else if (user.role !== "normal") {
+            allowedPages = "无限制（管理员）";
+        } else {
+            allowedPages = "无";
+        }
+
+        let actions = "";
+
+        if (user.ban_status) {
+            let unbanDisabled = false;
+            if (currentRole === "admin") {
+                if (user.ban_by !== currentAccount || user.role !== "normal") {
+                    unbanDisabled = true;
+                }
+            }
+            actions += `<button class="btn ${unbanDisabled ? 'btn-disabled' : 'btn-unban'}"
+                          onclick="${unbanDisabled ? '' : 'unbanUser(\''+user.account+'\')'}"
+                          ${unbanDisabled ? 'disabled' : ''}>解除封禁</button>`;
+
+            let editBtnHtml = '';
+            if (currentRole === "super_admin") {
+                if (user.role !== "super_admin" || user.account === currentAccount) {
+                    editBtnHtml = `<button class="btn btn-primary" onclick="openRoleModal('${user.account}')">编辑账户</button>`;
+                } else {
+                    editBtnHtml = `<button class="btn btn-disabled" disabled>无法修改</button>`;
+                }
+            } else if (currentRole === "admin") {
+                if (user.role === "normal") {
+                    editBtnHtml = `<button class="btn btn-primary" onclick="openPagePermissionModal('${user.account}')">编辑账户</button>`;
+                } else {
+                    editBtnHtml = `<button class="btn btn-disabled" disabled>无法修改</button>`;
+                }
+            }
+            actions += editBtnHtml;
+
+            let modifyBanBtnHtml = '';
+            if (
+                user.role === "super_admin" ||
+                user.account === currentAccount
+            ) {
+                modifyBanBtnHtml = `<button class="btn btn-disabled" disabled>无法修改封禁</button>`;
+            } else if (currentRole === "admin" && user.role !== "normal") {
+                modifyBanBtnHtml = `<button class="btn btn-disabled" disabled>无法修改封禁</button>`;
+            } else {
+                modifyBanBtnHtml = `<button class="btn btn-danger" onclick="openBanModal('${user.account}')">修改封禁</button>`;
+            }
+            actions += modifyBanBtnHtml;
+        }
+        else {
+            let banSettingBtnHtml = '';
+            if (
+                user.role === "super_admin" ||
+                user.account === currentAccount
+            ) {
+                banSettingBtnHtml = `<button class="btn btn-disabled" disabled>无法封禁</button>`;
+            } else if (currentRole === "admin" && user.role !== "normal") {
+                banSettingBtnHtml = `<button class="btn btn-disabled" disabled>无法封禁</button>`;
+            } else {
+                banSettingBtnHtml = `<button class="btn btn-danger" onclick="openBanModal('${user.account}')">封禁设置</button>`;
+            }
+            actions += banSettingBtnHtml;
+
+            let editBtnHtml = '';
+            if (currentRole === "super_admin") {
+                if (user.role !== "super_admin" || user.account === currentAccount) {
+                    editBtnHtml = `<button class="btn btn-primary" onclick="openRoleModal('${user.account}')">编辑账户</button>`;
+                } else {
+                    editBtnHtml = `<button class="btn btn-disabled" disabled>无法修改</button>`;
+                }
+            } else if (currentRole === "admin") {
+                if (user.role === "normal") {
+                    editBtnHtml = `<button class="btn btn-primary" onclick="openPagePermissionModal('${user.account}')">编辑账户</button>`;
+                } else {
+                    editBtnHtml = `<button class="btn btn-disabled" disabled>无法修改</button>`;
+                }
+            }
+            actions += editBtnHtml;
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${user.account}</td>
+            <td>${roleTag}</td>
+            <td>${allowedPages}</td>
+            <td>${banStatus}</td>
+            <td>${user.ban_expire || '-'}</td>
+            <td>${user.ban_by || '-'}</td>
+            <td>${actions}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function addUser() {
+    hideAllFormErrors();
+
+    const account = document.getElementById("addAccount").value.trim();
+    const password = document.getElementById("addPassword").value.trim();
+    const role = document.getElementById("addRoleValue").value;
+    const allowedPages = [];
+    if (document.getElementById("pageSearch").checked) allowedPages.push("search.html");
+    if (document.getElementById("pageRecord").checked) allowedPages.push("record.html");
+
+    let isValid = true;
+    if (!account) {
+        showFormError('errorAccount', '账号不能为空！');
+        isValid = false;
+    }
+    if (!password) {
+        showFormError('errorPassword', '密码不能为空！');
+        isValid = false;
+    }
+    if (role === 'normal' && allowedPages.length === 0) {
+        showFormError('errorAccount', '普通用户必须选择至少一个可访问的页面！');
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+    const formData = new FormData();
+    formData.append("account", account);
+    formData.append("password", password);
+    formData.append("role", role);
+    allowedPages.forEach(page => formData.append("allowed_pages[]", page));
+
+    fetch("/api/add_user", {
+        method: "POST",
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showFormError('errorAccount', res.msg);
+            showToast(res.msg, "error");
+        } else {
+            showToast(res.msg, "success");
+            toggleAddCard();
+            loadUserList();
+        }
+    })
+    .catch(err => {
+        showToast("创建用户失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+function openBanModal(account) {
+    hideAllFormErrors();
+    const user = userList.find(u => u.account === account);
+    if (!user) {
+    showToast("用户不存在！", "error");
+    return;
+    }
+
+    if (user.role === "super_admin") {
+    showToast("超级管理员无法被封禁！", "error");
+    return;
+    }
+
+    if (account === currentAccount) {
+    showToast("无法封禁当前登录的自己！", "error");
+    return;
+    }
+
+    document.getElementById("banTargetAccount").value = account;
+    document.getElementById("banReason").value = user.ban_reason || "";
+
+    // 重置封禁下拉
+    document.getElementById("banTypeValue").value = "1天";
+    document.getElementById("banTypeDisplay").innerText = "1天";
+    document.getElementById("banExpireDate").value = "";
+    toggleBanDate();
+
+    if (user.ban_status && user.ban_expire) {
+        if (user.ban_expire === "永久") {
+            document.getElementById("banTypeValue").value = "永久";
+            document.getElementById("banTypeDisplay").innerText = "永久";
+        } else if (user.ban_expire) {
+            try {
+                const expireDate = new Date(user.ban_expire);
+                if (!isNaN(expireDate.getTime())) {
+                    document.getElementById("banTypeValue").value = "自定义日期";
+                    document.getElementById("banTypeDisplay").innerText = "自定义到期日期";
+                    document.getElementById("banExpireDate").value = user.ban_expire;
+                    banCalendarCurrent = expireDate;
+                    renderBanCalendar();
+                    toggleBanDate();
+                }
+            } catch (e) {}
+        }
+    }
+
+    if (currentRole === "admin") {
+        if (!user.ban_status) {
+            document.getElementById("banModal").classList.add("show");
+        } else if (user.ban_by === currentAccount) {
+            document.getElementById("banModal").classList.add("show");
+        } else {
+            showToast("仅能修改自己封禁的用户！", "error");
+        }
+    } else {
+        document.getElementById("banModal").classList.add("show");
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove("show");
+    hideAllFormErrors();
+    document.getElementById("banCalendar").style.display = "none";
+    if (modalId === 'roleModal') {
+        document.getElementById('changePasswordToggle').checked = false;
+        document.getElementById('passwordInputGroup').classList.remove('show');
+    }
+}
+
+// 切换封禁日期选择器显示状态
+function toggleBanDate() {
+    const banType = document.getElementById("banTypeValue").value;
+    const banDateGroup = document.getElementById("banDateGroup");
+    banDateGroup.style.display = banType === "自定义日期" ? "block" : "none";
+
+    if (banType === "自定义日期" && !document.getElementById("banExpireDate").value) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById("banExpireDate").value = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,"0")}-${String(tomorrow.getDate()).padStart(2,"0")}`;
+        banCalendarCurrent = tomorrow;
+        renderBanCalendar();
+    }
+}
+
+// 初始化封禁日期选择器
+function initBanCalendar() {
+    const banDateInput = document.getElementById("banExpireDate");
+    const banCalendar = document.getElementById("banCalendar");
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    banCalendarCurrent = tomorrow;
+
+    renderBanCalendar();
+
+    banDateInput.onclick = (e) => {
+        e.stopPropagation();
+        banCalendar.style.display = banCalendar.style.display === "block" ? "none" : "block";
+    };
+
+    document.addEventListener("click", (e) => {
+        if (!document.querySelector(".date-wrapper").contains(e.target)) {
+            banCalendar.style.display = "none";
+        }
+    });
+}
+
+// 渲染封禁日历
+function renderBanCalendar() {
+    const banCalendar = document.getElementById("banCalendar");
+    const banDateInput = document.getElementById("banExpireDate");
+    banCalendar.innerHTML = "";
+
+    let y = banCalendarCurrent.getFullYear();
+    let m = banCalendarCurrent.getMonth();
+    let today = new Date();
+
+    let header = document.createElement("div");
+    header.className = "calendar-header";
+    header.innerHTML = `
+        <button type="button" id="banPrev">◀</button>
+        <span>${y} - ${m+1}</span>
+        <button type="button" id="banNext">▶</button>
+    `;
+    banCalendar.appendChild(header);
+
+    let grid = document.createElement("div");
+    grid.className = "calendar-grid";
+
+    let firstDay = new Date(y, m, 1).getDay();
+    for (let i = 0; i < firstDay; i++) {
+        grid.appendChild(document.createElement("div"));
+    }
+
+    let daysInMonth = new Date(y, m+1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+        let cell = document.createElement("div");
+        cell.className = "calendar-day";
+        let cellDate = new Date(y, m, d);
+        cell.innerText = d;
+
+        if (cellDate <= today) {
+            cell.classList.add("disabled");
+        } else {
+            cell.onclick = () => {
+                const selectedDate = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+                banDateInput.value = selectedDate;
+                banCalendar.style.display = "none";
+            };
+        }
+
+        if (banDateInput.value === `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`) {
+            cell.classList.add("selected");
+        }
+
+        grid.appendChild(cell);
+    }
+
+    banCalendar.appendChild(grid);
+
+    document.getElementById("banPrev").onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        banCalendarCurrent.setMonth(banCalendarCurrent.getMonth() - 1);
+        renderBanCalendar();
+    };
+
+    document.getElementById("banNext").onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        banCalendarCurrent.setMonth(banCalendarCurrent.getMonth() + 1);
+        renderBanCalendar();
+    };
+}
+
+function banUser() {
+    hideAllFormErrors();
+
+    const account = document.getElementById("banTargetAccount").value;
+    const banType = document.getElementById("banTypeValue").value;
+    const banExpireDate = document.getElementById("banExpireDate").value;
+    const banReason = document.getElementById("banReason").value.trim();
+
+    let isValid = true;
+    if (!banReason) {
+        showFormError('errorBanReason', '封禁原因不能为空！');
+        isValid = false;
+    }
+    if (banType === "自定义日期" && !banExpireDate) {
+        showFormError('errorBanDate', '请选择封禁到期日期！');
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+    let banExpire = "";
+    if (banType === "永久") {
+        banExpire = "永久";
+    } else if (banType === "自定义日期") {
+        banExpire = banExpireDate;
+    } else {
+        const days = parseInt(banType);
+        const expireDate = new Date();
+        expireDate.setDate(expireDate.getDate() + days);
+        banExpire = `${expireDate.getFullYear()}-${String(expireDate.getMonth()+1).padStart(2,"0")}-${String(expireDate.getDate()).padStart(2,"0")}`;
+    }
+
+    const formData = new FormData();
+    formData.append("account", account);
+    formData.append("ban_type", banType);
+    formData.append("ban_expire", banExpire);
+    formData.append("ban_reason", banReason);
+
+    fetch("/api/ban_user", { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showToast(res.msg, "error");
+        } else {
+            showToast(res.msg, "success");
+            closeModal("banModal");
+            loadUserList();
+        }
+    })
+    .catch(err => {
+        showToast("封禁用户失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 自定义确认弹窗
+function showConfirm(title, message) {
+    return new Promise((resolve) => {
+        confirmResolve = resolve;
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('customConfirmModal').classList.add('show');
+    });
+}
+
+// 确认弹窗回调
+function confirmCallback(isConfirm) {
+    document.getElementById('customConfirmModal').classList.remove('show');
+    confirmResolve(isConfirm);
+}
+
+async function unbanUser(account) {
+    const isConfirm = await showConfirm('确认解封', `确认解封用户 ${account} 吗？`);
+    if (!isConfirm) return;
+
+    const formData = new FormData();
+    formData.append("account", account);
+
+    fetch("/api/unban_user", { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showToast(res.msg, "error");
+        } else {
+            showToast(res.msg, "success");
+            loadUserList();
+        }
+    })
+    .catch(err => {
+        showToast("解封用户失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 超级管理员：调整角色弹窗相关
+function toggleRolePages(){
+
+    const role = document.getElementById("newRoleValue").value;
+
+    const group = document.getElementById("rolePagesGroup");
+
+    if(role === "normal"){
+        group.classList.remove("hide");
+    }else{
+        group.classList.add("hide");
+    }
+
+}
+
+function toggleAddRolePages() {
+
+    const role = document.getElementById("addRoleValue").value;
+
+    const group = document.querySelector("#createUserModal .role-pages-group");
+
+    if(role === "normal"){
+        group.classList.remove("hide");
+    }else{
+        group.classList.add("hide");
+    }
+
+}
+
+function openRoleModal(account) {
+    hideAllFormErrors();
+    const targetUser = userList.find(u => u.account === account);
+
+    if (targetUser && targetUser.role === "super_admin" && account !== "{{ current_account }}") {
+        showToast("禁止修改其他超级管理员账户！", "error");
+        return;
+    }
+
+    document.getElementById("roleTargetAccount").value = account;
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+
+    const user = userList.find(u => u.account === account);
+    if (user) {
+        // 设置角色下拉值
+        document.getElementById("newRoleValue").value = user.role;
+        document.getElementById("newRoleDisplay").innerText =
+            user.role === "normal" ? "普通用户" :
+            user.role === "admin" ? "管理员" : "超级管理员";
+
+        toggleRolePages();
+
+        if (account === "{{ current_account }}" && user.role === "super_admin") {
+            // 禁用自己的超级管理员角色修改
+            const select = document.getElementById("newRoleSelect");
+            const display = select.querySelector(".select-display");
+            display.style.pointerEvents = "none";
+            display.style.opacity = "0.7";
+        } else {
+            const select = document.getElementById("newRoleSelect");
+            const display = select.querySelector(".select-display");
+            display.style.pointerEvents = "auto";
+            display.style.opacity = "1";
+        }
+
+        if (user.role === "normal") {
+            document.getElementById("rolePageSearch").checked = user.allowed_pages.includes("search.html");
+            document.getElementById("rolePageRecord").checked = user.allowed_pages.includes("record.html");
+        } else {
+            document.getElementById("rolePageSearch").checked = false;
+            document.getElementById("rolePageRecord").checked = false;
+        }
+    }
+    document.getElementById("roleModal").classList.add("show");
+}
+
+function changeRole() {
+    hideAllFormErrors();
+
+    const account = document.getElementById("roleTargetAccount").value;
+    const newRole = document.getElementById("newRoleValue").value;
+    const changePassword = document.getElementById('changePasswordToggle').checked;
+    const newPassword = document.getElementById("newPassword").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword").value.trim();
+    const allowedPages = [];
+
+    if (changePassword) {
+        if (!newPassword) {
+            showFormError('errorPassword', '密码不能为空！');
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            showFormError('errorPassword', '两次输入的密码不一致！');
+            return;
+        }
+        if (newPassword.length < 6) {
+            showFormError('errorPassword', '密码长度不能少于6位！');
+            return;
+        }
+    }
+
+    if (newRole === "normal") {
+        if (document.getElementById("rolePageSearch").checked) allowedPages.push("search.html");
+        if (document.getElementById("rolePageRecord").checked) allowedPages.push("record.html");
+
+        if (allowedPages.length === 0) {
+            showFormError('errorRolePages', '普通用户必须选择至少一个可访问的页面！');
+            return;
+        }
+    }
+
+    const formData = new FormData();
+    formData.append("account", account);
+
+    // 只有非超级管理员或不是自己才更新角色
+    const select = document.getElementById("newRoleSelect");
+    const display = select.querySelector(".select-display");
+    if (display.style.pointerEvents !== "none") {
+        formData.append("new_role", newRole);
+    }
+
+    if (changePassword) {
+        formData.append("new_password", newPassword);
+    }
+
+    allowedPages.forEach(page => formData.append("allowed_pages[]", page));
+
+    fetch("/api/change_user_role", { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showToast(res.msg, "error");
+        } else {
+            const msg = changePassword ? "密码修改成功！" : "角色修改成功！";
+            showToast(msg, "success");
+            closeModal("roleModal");
+            setTimeout(() => window.location.reload(), 1500);
+        }
+    })
+    .catch(err => {
+        const msg = changePassword ? "修改密码失败：" : "修改角色失败：";
+        showToast(msg + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 普通管理员：调整页面权限弹窗相关
+function openPagePermissionModal(account) {
+    hideAllFormErrors();
+    document.getElementById("permTargetAccount").value = account;
+    const user = userList.find(u => u.account === account);
+    if (user) {
+        document.getElementById("permPageSearch").checked = user.allowed_pages.includes("search.html");
+        document.getElementById("permPageRecord").checked = user.allowed_pages.includes("record.html");
+    }
+    document.getElementById("pagePermissionModal").classList.add("show");
+}
+
+function savePagePermissions() {
+    hideAllFormErrors();
+
+    const account = document.getElementById("permTargetAccount").value;
+    const allowedPages = [];
+    if (document.getElementById("permPageSearch").checked) allowedPages.push("search.html");
+    if (document.getElementById("permPageRecord").checked) allowedPages.push("record.html");
+
+    if (allowedPages.length === 0) {
+        showFormError('errorPermPages', '普通用户必须选择至少一个可访问的页面！');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("account", account);
+    formData.append("new_role", "normal");
+    allowedPages.forEach(page => formData.append("allowed_pages[]", page));
+
+    fetch("/api/change_user_role", { method: "POST", body: formData })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showToast(res.msg, "error");
+        } else {
+            showToast("页面权限修改成功！", "success");
+            closeModal("pagePermissionModal");
+            loadUserList();
+        }
+    })
+    .catch(err => {
+        showToast("修改页面权限失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 新增：删除账户功能
+async function deleteAccount() {
+    const account = document.getElementById("roleTargetAccount").value;
+    const targetUser = userList.find(u => u.account === account);
+    if (targetUser && targetUser.role === "super_admin") {
+        showToast("禁止删除超级管理员账户！", "error");
+        return;
+    }
+    if (account === currentAccount) {
+        showToast("禁止删除当前登录的账户！", "error");
+        return;
+    }
+    const isFirstConfirm = await showConfirm(
+        '⚠️ 危险操作',
+        `删除账户【${account}】将永久删除该用户所有数据，且无法恢复！\n确认要删除吗？`
+    );
+    if (!isFirstConfirm) return;
+
+    const isSecondConfirm = await showConfirm(
+        '🚨 最终确认',
+        `最后确认：是否真的要删除账户【${account}】？`
+    );
+    if (!isSecondConfirm) return;
+
+    const formData = new FormData();
+    formData.append("account", account);
+
+    fetch("/api/delete_user", {
+        method: "POST",
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === "error") {
+            showToast(res.msg, "error");
+        } else {
+            showToast(res.msg, "success");
+            closeModal("roleModal");
+            loadUserList();
+        }
+    })
+    .catch(err => {
+        showToast("删除账户失败：" + err.message, "error");
+        console.error(err);
+    });
+}
+
+// 增强版Toast提示
+function showToast(msg, type="success") {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.className = 'toast';
+    toast.classList.add(type);
+    toast.classList.add("show");
+
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+</script>
+
+{% if session.logged_in and (is_admin or is_super_admin) %}
+<div style="display:none; width:0; height:0; opacity:0; pointer-events:none;">
+    <iframe src="/" title="预加载首页"></iframe>
+</div>
+{% endif %}
+</body>
+</html>

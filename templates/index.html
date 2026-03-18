@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>TD2 BLACKLIST SYSTEM</title>
+
+<link rel="shortcut icon" href="/static/TCTD2_Icon_Phoenix_Secondary_Orange.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+
+<style>
+
+
+
+
+
+/* 全局字体规则：中文/混合用Smiley Sans，纯英文用科技字体 */
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background: radial-gradient(circle at top,#1b2735,#090a0f);
+font-family: "Smiley Sans", 'Segoe UI', sans-serif; /* 核心：优先Smiley Sans */
+overflow:hidden;
+}
+
+body::before{
+content:"";
+position:absolute;
+width:800px;
+height:800px;
+background:radial-gradient(circle,#ff7b00 0%,transparent 70%);
+opacity:0.12;
+animation:breath 6s ease-in-out infinite;
+}
+
+@keyframes breath{
+0%,100%{transform:scale(1);}
+50%{transform:scale(1.2);}
+}
+
+.card{
+width:500px;
+padding:40px;
+border-radius:20px;
+backdrop-filter:blur(25px);
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+color:white;
+text-align:center;
+}
+
+/* 标题纯英文：强制科技字体 */
+h1{
+color:#ff7b00;
+font-family:'Orbitron',sans-serif !important;
+margin-bottom:30px;
+}
+
+/* 按钮（含中文）：强制Smiley Sans */
+.nav-btn{
+width:100%;
+padding:16px;
+margin-top:20px;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+color:white;
+background:linear-gradient(90deg,#ff7b00,#ff4500,#ff7b00);
+background-size:200%;
+transition:0.4s;
+font-family: "Smiley Sans", sans-serif !important; /* 按钮文字用Smiley Sans */
+}
+
+.nav-btn:hover{
+background-position:100%;
+box-shadow:0 5px 25px rgba(255,123,0,0.7);
+}
+
+/* 右上角用户信息：中文用Smiley Sans */
+.user-panel{
+position:absolute;
+top:20px;
+right:30px;
+color:rgba(255,255,255,0.8);
+font-size:13px;
+font-family: "Smiley Sans", sans-serif;
+}
+
+.user-panel a{
+color:#ff7b00;
+text-decoration:none;
+margin-left:12px;
+font-family: "Smiley Sans", sans-serif;
+}
+
+/* ===== Toast 提示框：中文用Smiley Sans ===== */
+.toast{
+position:fixed;
+top:40px;
+left:50%;
+transform:translateX(-50%) translateY(-30px);
+min-width:280px;
+padding:16px 28px;
+border-radius:14px;
+backdrop-filter:blur(20px);
+background:rgba(20,30,40,0.9);
+border:1px solid rgba(255,255,255,0.15);
+color:white;
+font-size:14px;
+text-align:center;
+opacity:0;
+pointer-events:none;
+transition:all 0.4s ease;
+z-index:9999;
+font-family: "Smiley Sans", sans-serif; /* 提示文字用Smiley Sans */
+}
+
+.toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+
+.toast.success{
+border-color:rgba(0,255,120,0.8);
+box-shadow:0 0 25px rgba(0,255,120,0.8);
+}
+
+.toast.error{
+border-color:rgba(255,70,70,0.8);
+box-shadow:0 0 20px rgba(255,70,70,0.6);
+}
+
+/* ===== 备案号：中文用Smiley Sans ===== */
+.beian{
+position:fixed;
+bottom:14px;
+left:50%;
+transform:translateX(-50%);
+font-size:12px;
+letter-spacing:0.5px;
+opacity:0.7;
+z-index:999;
+font-family: "Smiley Sans", sans-serif; /* 备案号用Smiley Sans */
+}
+
+.beian a{
+color:rgba(255,255,255,0.45);
+text-decoration:none;
+transition:0.25s;
+font-family: "Smiley Sans", sans-serif;
+}
+
+.beian a:hover{
+color:#ff7b00;
+text-shadow:0 0 6px rgba(255,123,0,0.6);
+}
+
+/* 修复：管理员菜单默认隐藏，移除!important允许JS覆盖 */
+#adminMenu {
+    display: none;
+}
+
+/* 新增：管理员菜单显示样式，提高优先级 */
+#adminMenu.show {
+    display: block !important;
+}
+</style>
+</head>
+
+<body>
+<div class="user-panel">
+当前用户：{{ session['account'] }}
+<!-- 新增角色显示逻辑 -->
+<span style="color: {{ '#b22222' if is_super_admin else '#ff7b00' if is_admin else '#ffffff' }}">
+    {{ '（超级管理员）' if is_super_admin else '（管理员）' if is_admin else '（普通用户）' }}
+</span>
+<a href="/logout">退出登录</a>
+</div>
+
+<div class="card">
+<h1>TD2 BLACKLIST SYSTEM</h1>
+
+<!-- 给普通用户按钮添加ID，用于权限控制 -->
+<button id="searchBtn" class="nav-btn" onclick="location.href='/search'">
+黑名单查询
+</button>
+
+<button id="recordBtn" class="nav-btn" onclick="location.href='/record'">
+黑名单提交
+</button>
+
+<!-- 管理员专属IP管理入口 - 默认隐藏 -->
+<div id="adminMenu">
+    <button class="nav-btn" onclick="location.href='/admin/ip_manage'">
+    IP黑名单管理
+    </button>
+    <button class="nav-btn" onclick="location.href='/admin/user_manage'">
+    用户管理
+    </button>
+</div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast">
+<span id="toastMessage"></span>
+</div>
+
+<!-- 备案号 -->
+<div class="beian">
+<a href="https://beian.miit.gov.cn/" target="_blank">
+备案号：沪ICP备2024085005号-1
+</a>
+</div>
+
+<script>
+// 统一的Toast显示函数
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    toastMessage.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// 合并所有页面加载逻辑，避免重复定义window.onload
+window.onload = function() {
+    // 1. 优先使用后端模板变量显示管理员菜单（兜底方案）
+    const isAdmin = {{ 'true' if is_admin else 'false' }};
+    const isSuperAdmin = {{ 'true' if is_super_admin else 'false' }};
+
+    // 后端直接判断：管理员/超级管理员直接显示菜单
+    if (isAdmin || isSuperAdmin) {
+        document.getElementById("adminMenu").classList.add("show");
+    }
+
+    // 2. 处理Flask闪现消息
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        showToast("{{ messages[0] }}", "{{ 'success' if '成功' in messages[0] else 'error' }}");
+    {% endif %}
+    {% endwith %}
+
+    // 3. 请求当前用户信息，校验权限（双重保障）
+    fetch("/api/get_current_user", {
+        method: 'GET',
+        cache: 'no-cache',  // 禁用缓存
+        headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+        }
+    })
+    .then(r => {
+        // 检查响应状态，避免非JSON响应报错
+        if (!r.ok) throw new Error(`请求失败：${r.status}`);
+        return r.json();
+    })
+    .then(data => {
+        // 3.1 管理员/超级管理员：确保显示管理员菜单
+        if (data.role === "admin" || data.role === "super_admin") {
+            document.getElementById("adminMenu").classList.add("show");
+        }
+        // 3.2 普通用户：确保隐藏管理员菜单，控制页面访问权限
+        else {
+            document.getElementById("adminMenu").classList.remove("show");
+            const allowedPages = data.allowed_pages || [];
+
+            // 根据权限显示/隐藏普通用户按钮
+            document.getElementById("searchBtn").style.display = allowedPages.includes("search.html") ? "block" : "none";
+            document.getElementById("recordBtn").style.display = allowedPages.includes("record.html") ? "block" : "none";
+        }
+    })
+    .catch(err => {
+        console.error("校验角色失败：", err);
+        // 仅在未登录时跳转，避免无限刷新
+        if (err.message.includes("401") || err.message.includes("用户不存在")) {
+            window.location.href = "/login";
+        } else {
+            // 保留后端模板的判断结果，不覆盖
+            showToast("权限校验失败，已使用本地权限", "warning");
+        }
+    });
+};
+</script>
+<!-- ======================
+【全权限预加载】管理员 + 普通用户 全部预加载
+====================== -->
+{% if session.logged_in %}
+    {% if is_admin or is_super_admin %}
+    <div style="display:none;">
+        <iframe class="preload" src="/admin/ip_manage"></iframe>
+        <iframe class="preload" src="/admin/user_manage"></iframe>
+    </div>
+
+    <script>
+    // 管理员全局缓存
+    window.adminPreload = {
+        logCache: [],
+        blacklistCache: [],
+        attackStatsCache: []
+    };
+
+    async function preloadAdminData() {
+        try {
+            const logRes = await fetch("/api/real_time_log");
+            if (logRes.ok) window.adminPreload.logCache = await logRes.json();
+        } catch (e) {}
+        try {
+            const blackRes = await fetch("/api/ip_blacklist");
+            if (blackRes.ok) window.adminPreload.blacklistCache = await blackRes.json();
+        } catch (e) {}
+        try {
+            const statsRes = await fetch("/api/attack_stats");
+            if (statsRes.ok) window.adminPreload.attackStatsCache = await statsRes.json();
+        } catch (e) {}
+        console.log("✅ 管理员数据预加载完成");
+    }
+    </script>
+    {% endif %}
+
+    <!-- 🔥 所有登录用户（普通/管理员）都预加载 search 卡片 -->
+    <script>
+    window.searchPreload = { data: [] };
+    async function preloadSearchData() {
+        try {
+            const res = await fetch("/api/all_bans");
+            if (res.ok) {
+                window.searchPreload.data = await res.json();
+                console.log("✅ 黑名单列表已预加载");
+            }
+        } catch (e) {}
+    }
+    </script>
+
+    <div style="display:none;">
+        <iframe class="preload" src="/search"></iframe>
+    </div>
+
+    <script>
+    window.addEventListener('load', function() {
+        setTimeout(() => {
+            // 预加载公共数据（所有登录用户）
+            preloadSearchData();
+            // 管理员额外预加载
+            {% if is_admin or is_super_admin %}
+            preloadAdminData();
+            {% endif %}
+            // 清理 iframe
+            document.querySelectorAll('.preload').forEach(frame => frame.remove());
+        }, 1500);
+    });
+    </script>
+{% endif %}
+</body>
+</html>

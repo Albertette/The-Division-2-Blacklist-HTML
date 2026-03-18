@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>全境封锁2黑名单提交系统</title>
+<link rel="shortcut icon" href="/static/TCTD2_Icon_Phoenix_Secondary_Orange.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background: radial-gradient(circle at top,#1b2735,#090a0f);
+font-family:'Segoe UI',sans-serif;
+overflow:hidden;
+}
+
+/* 呼吸光 */
+body::before{
+content:"";
+position:absolute;
+width:800px;height:800px;
+background:radial-gradient(circle,#ff7b00 0%,transparent 70%);
+opacity:0.1;
+animation:breath 6s ease-in-out infinite;
+}
+@keyframes breath{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+
+/* 右上角 */
+.user-panel{
+position:absolute;top:20px;right:30px;
+color:rgba(255,255,255,0.8);
+font-size:13px;z-index:10;
+font-family: "Smiley Sans", sans-serif;
+}
+.user-panel a{color:#ff7b00;text-decoration:none;margin-left:12px;font-family: "Smiley Sans", sans-serif;}
+
+/* 主卡片 */
+.card{
+width:460px;padding:40px;border-radius:20px;
+backdrop-filter:blur(25px);
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+color:white;z-index:2;
+}
+
+h1{text-align:center;margin-bottom:30px;color:#ff7b00;font-family:'Orbitron',sans-serif;font-size:18px;}
+
+/* 输入框统一字体 + 统一粗细 */
+.input-group{position:relative;margin-bottom:22px;}
+.input-group input,
+.input-group textarea{
+width:100%;padding:14px 12px;
+background:transparent;
+border:1px solid rgba(255,255,255,0.3);
+border-radius:8px;
+color:white;
+font-size:14px;
+outline:none;transition:0.3s;resize:none;
+
+/* 👇 这里统一所有输入框字体（修复备注变细） */
+font-family: "Smiley Sans", sans-serif !important;
+font-weight: normal !important;
+}
+
+/* textarea特殊 */
+textarea{min-height:46px;max-height:150px;overflow-y:auto;line-height:1.4;}
+
+/* focus效果 */
+.input-group input:focus,
+.input-group textarea:focus{border-color:#ff7b00;box-shadow:0 0 12px rgba(255,123,0,0.6);}
+
+/* label动画 */
+.input-group label{
+position:absolute;top:14px;left:12px;
+color:rgba(255,255,255,0.6);
+transition:0.3s;pointer-events:none;
+font-family: "Smiley Sans", sans-serif !important;
+}
+.input-group input:focus+label,
+.input-group input:not(:placeholder-shown)+label,
+.input-group textarea:focus+label,
+.input-group textarea:not(:placeholder-shown)+label{
+top:-9px;left:8px;font-size:12px;
+background:#0f141a;padding:0 5px;
+color:#ff7b00;
+font-family: "Smiley Sans", sans-serif !important;
+border-radius:6px;
+}
+
+/* 自定义下拉label */
+.custom-select label{
+position:absolute;top:14px;left:12px;
+color:rgba(255,255,255,0.6);
+transition:0.3s;pointer-events:none;
+font-family: "Smiley Sans", sans-serif !important;
+}
+.custom-select.filled label,
+.custom-select.active label{
+top:-9px;left:8px;font-size:12px;
+background:#0f141a;padding:0 5px;
+color:#ff7b00;
+font-family: "Smiley Sans", sans-serif !important;
+border-radius:6px;
+}
+
+/* 视频复选框 */
+.video-checkbox-group {
+display:flex;align-items:center;margin-bottom:18px;gap:10px;cursor:pointer;
+}
+.video-checkbox-group input[type="checkbox"] {
+width:18px;height:18px;accent-color:#ff7b00;cursor:pointer;
+}
+.video-checkbox-group label {
+color:rgba(255,255,255,0.8);
+font-family: "Smiley Sans", sans-serif;font-size:14px;cursor:pointer;margin:0;
+}
+
+/* 视频链接输入框动画：平滑淡入淡出 + 修复标签被遮挡 */
+#videoLinkGroup {
+  opacity: 0;
+  visibility: hidden;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  /* 关键修复：留出顶部空间，不让标签被复选框挡住 */
+  margin-top: 6px;
+}
+#videoLinkGroup.show {
+  opacity: 1;
+  visibility: visible;
+  max-height: 80px;
+  margin-bottom: 22px;
+  /* 关键修复：展开时给足够顶部间距 */
+  margin-top: 6px;
+}
+/* 视频链接输入框：保留科技感样式，禁止 label 上浮 */
+#videoLinkGroup {
+  /* 继承原 input-group 样式，保证边框、圆角、背景一致 */
+  position: relative;
+  margin-bottom: 22px;
+  margin-top: 6px;
+}
+
+#videoLinkGroup input {
+  /* 完全继承原输入框样式 */
+  width: 100%;
+  padding: 14px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  transition: 0.3s;
+  font-family: "Smiley Sans", sans-serif !important;
+  font-weight: normal !important;
+}
+
+/* 聚焦效果和原输入框完全一致 */
+#videoLinkGroup input:focus {
+  border-color: #ff7b00;
+  box-shadow: 0 0 12px rgba(255,123,0,0.6);
+}
+
+/* 占位符样式（和原输入框灰色提示一致） */
+#videoLinkGroup input::placeholder {
+  color: rgba(255,255,255,0.6);
+  font-family: "Smiley Sans", sans-serif;
+  opacity: 1;
+}
+
+/* 关键：彻底禁止 label 上浮（这里已经没有 label，彻底安全） */
+#videoLinkGroup label {
+  display: none !important;
+}
+
+/* 日历 */
+.date-wrapper{position:relative;}
+.calendar{
+position:absolute;top:110%;width:100%;
+background:rgba(15,20,25,0.95);backdrop-filter:blur(20px);
+border-radius:12px;border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 0 30px rgba(0,0,0,0.7);
+padding:15px;display:none;z-index:1000;
+}
+.calendar-header{
+display:flex;justify-content:space-between;align-items:center;
+margin-bottom:12px;color:#ff7b00;font-size:14px;
+font-family: 'Orbitron', sans-serif !important;
+}
+.calendar-header button{background:none;border:none;color:#ff7b00;font-size:16px;cursor:pointer;font-family: 'Orbitron', sans-serif;}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:13px;text-align:center;font-family: 'Orbitron', sans-serif !important;}
+.calendar-day{padding:8px;border-radius:6px;cursor:pointer;transition:0.2s;font-family: 'Orbitron', sans-serif !important;}
+.calendar-day:hover{background:#ff7b00;color:black;}
+.calendar-day.disabled{opacity:0.3;pointer-events:none;}
+.calendar-day.selected{background:#ff7b00;color:black;box-shadow:0 0 10px rgba(255,123,0,0.8);}
+
+/* 下拉 */
+.custom-select{position:relative;cursor:pointer;width:100%;}
+.select-display{
+width:100%;padding:14px 12px;background:transparent;
+border:1px solid rgba(255,255,255,0.3);border-radius:8px;
+color:white;font-size:14px;transition:0.3s;
+display:flex;align-items:center;height:46px;
+font-family: "Smiley Sans", sans-serif;
+}
+.select-display.active{border-color:#ff7b00;box-shadow:0 0 12px rgba(255,123,0,0.6);}
+.select-options{
+position:absolute;top:105%;width:100%;
+background:rgba(20,30,40,0.95);backdrop-filter:blur(15px);
+border:1px solid rgba(255,255,255,0.2);border-radius:8px;
+max-height:0;overflow:hidden;transition:max-height 0.3s ease;z-index:20;
+}
+.select-options.open{max-height:220px;overflow-y:auto;}
+.select-options div{padding:12px;transition:0.2s;font-family: "Smiley Sans", sans-serif;}
+.select-options div:hover{background:#ff7b00;color:black;}
+
+/* 按钮 */
+.submit-btn{
+width:100%;padding:14px;border:none;border-radius:8px;
+font-size:15px;cursor:pointer;color:white;
+background:linear-gradient(90deg,#ff7b00,#ff4500,#ff7b00);
+background-size:200%;transition:0.4s;
+font-family: "Smiley Sans", sans-serif;
+}
+.submit-btn:hover{background-position:100%;box-shadow:0 5px 25px rgba(255,123,0,0.7);}
+
+/* Toast */
+.toast{
+position:fixed;top:40px;left:50%;transform:translateX(-50%) translateY(-30px);
+min-width:280px;padding:16px 28px;border-radius:14px;
+backdrop-filter:blur(20px);background:rgba(20,30,40,0.9);
+border:1px solid rgba(255,255,255,0.15);
+color:white;font-size:14px;text-align:center;
+opacity:0;pointer-events:none;transition:all 0.4s ease;z-index:9999;
+font-family: "Smiley Sans", sans-serif;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:rgba(0,255,120,0.8);box-shadow:0 0 25px rgba(0,255,120,0.8);}
+.toast.error{border-color:rgba(255,70,70,0.8);box-shadow:0 0 20px rgba(255,70,70,0.6);}
+
+/* 备案 */
+.beian{
+position:fixed;bottom:14px;left:50%;transform:translateX(-50%);
+font-size:12px;letter-spacing:0.5px;opacity:0.7;z-index:999;
+font-family: "Smiley Sans", sans-serif;
+}
+.beian a{color:rgba(255,255,255,0.45);text-decoration:none;transition:0.25s;font-family: "Smiley Sans", sans-serif;}
+.beian a:hover{color:#ff7b00;text-shadow:0 0 6px rgba(255,123,0,0.6);}
+</style>
+</head>
+
+<body>
+<div class="user-panel">
+当前用户：{{ session['account'] }}
+<span style="color: {{ '#b22222' if is_super_admin else '#ff7b00' if is_admin else '#ffffff' }}">
+    {{ '（超级管理员）' if is_super_admin else '（管理员）' if is_admin else '（普通用户）' }}
+</span>
+<a href="/logout">退出登录</a>
+<a href="/" style="color:#ff7b00">返回首页</a>
+</div>
+
+<div class="card">
+<h1>BLACKLIST RECORD</h1>
+
+<form action="/submit" method="post" id="submitForm">
+<input type="hidden" name="token" value="{{ token }}">
+
+<div class="input-group">
+<input type="text" name="name" required placeholder=" " value="{{ form_data.get('name','') }}">
+<label>游戏ID</label>
+</div>
+
+<div class="input-group">
+<input type="text" name="uuid" required placeholder=" " value="{{ form_data.get('uuid','') }}">
+<label>育碧标识符(UUID)</label>
+</div>
+
+<div class="input-group custom-select" id="crimeSelect">
+<input type="hidden" name="type" id="crimeValue" value="{{ form_data.get('type','') }}">
+<div class="select-display" id="selectDisplay">{{ form_data.get('type','') }}</div>
+<label>作案类型</label>
+<div class="select-options" id="selectOptions">
+{% for t in allowed_types %}
+<div data-value="{{ t }}">{{ t }}</div>
+{% endfor %}
+</div>
+</div>
+
+<div class="input-group date-wrapper">
+<input type="text" id="dateInput" name="date" readonly required placeholder=" " value="{{ form_data.get('date') or today }}">
+<label>选择日期</label>
+<div class="calendar" id="calendar"></div>
+</div>
+
+<div class="input-group">
+<textarea name="remark" maxlength="255" rows="1" placeholder=" " id="remarkBox">{{ form_data.get('remark','') }}</textarea>
+<label>备注(可选)</label>
+</div>
+
+<!-- 视频附件复选框 -->
+<div class="video-checkbox-group">
+<input type="checkbox" id="videoAttachCheck">
+<label for="videoAttachCheck">视频附件(可选)</label>
+</div>
+
+<!-- 视频链接输入框 -->
+<div id="videoLinkGroup" class="input-group">
+  <input
+    type="text"
+    name="video_link"
+    id="videoLinkInput"
+    placeholder="视频链接"
+    value="{{ form_data.get('video_link','') }}"
+  >
+</div>
+
+<button type="submit" class="submit-btn">提交记录</button>
+</form>
+</div>
+
+<div id="toast" class="toast"><span id="toastMessage"></span></div>
+
+<script>
+// 视频附件：平滑淡入淡出 + 不清空内容
+const videoCheck = document.getElementById('videoAttachCheck');
+const videoGroup = document.getElementById('videoLinkGroup');
+videoCheck.addEventListener('change', () => {
+    videoCheck.checked
+        ? videoGroup.classList.add('show')
+        : videoGroup.classList.remove('show');
+});
+
+// 提交拦截：未勾选则清空视频链接值（不清空输入框内容）
+const form = document.getElementById('submitForm');
+const videoLinkInput = document.getElementById('videoLinkInput');
+form.addEventListener('submit', (e) => {
+    if (!videoCheck.checked) {
+        videoLinkInput.removeAttribute('name');
+    } else {
+        videoLinkInput.setAttribute('name', 'video_link');
+    }
+});
+
+// 原下拉逻辑
+const selectDisplay=document.getElementById("selectDisplay");
+const selectOptions=document.getElementById("selectOptions");
+const crimeValue=document.getElementById("crimeValue");
+const crimeSelect=document.getElementById("crimeSelect");
+const options=selectOptions.querySelectorAll("div");
+const textarea=document.getElementById("remarkBox");
+
+textarea.addEventListener("input",()=>{
+    textarea.style.height="auto";
+    let maxHeight=150;
+    if(textarea.scrollHeight>maxHeight){
+        textarea.style.height=maxHeight+"px"; textarea.style.overflowY="auto";
+    }else{
+        textarea.style.height=textarea.scrollHeight+"px"; textarea.style.overflowY="hidden";
+    }
+});
+
+function updateSelectState(){
+    crimeValue.value ? crimeSelect.classList.add("filled") : crimeSelect.classList.remove("filled");
+}
+updateSelectState();
+selectDisplay.addEventListener("click",()=>{
+    selectOptions.classList.toggle("open");
+    crimeSelect.classList.toggle("active");
+    selectDisplay.classList.toggle("active");
+});
+options.forEach(option=>{
+    option.addEventListener("click",()=>{
+        selectDisplay.innerText=option.innerText;
+        crimeValue.value=option.dataset.value;
+        updateSelectState();
+        selectOptions.classList.remove("open");
+        crimeSelect.classList.remove("active");
+    });
+});
+document.addEventListener("click",(e)=>{
+    if(!crimeSelect.contains(e.target)){
+        selectOptions.classList.remove("open");
+        crimeSelect.classList.remove("active");
+    }
+});
+
+// 日历
+const dateInput=document.getElementById("dateInput");
+const calendar=document.getElementById("calendar");
+let current=new Date(dateInput.value || new Date());
+let today=new Date();
+function render(){
+    calendar.innerHTML="";
+    let y=current.getFullYear(),m=current.getMonth();
+    let header=document.createElement("div");
+    header.className="calendar-header";
+    header.innerHTML=`<button type="button" id="prev">◀</button><span>${y} - ${m+1}</span><button type="button" id="next">▶</button>`;
+    calendar.appendChild(header);
+    let grid=document.createElement("div");grid.className="calendar-grid";
+    let first=new Date(y,m,1).getDay();
+    let days=new Date(y,m+1,0).getDate();
+    for(let i=0;i<first;i++) grid.appendChild(document.createElement("div"));
+    for(let d=1;d<=days;d++){
+        let cell=document.createElement("div");cell.className="calendar-day";
+        let cellDate=new Date(y,m,d);cell.innerText=d;
+        if(cellDate>today) cell.classList.add("disabled");
+        else cell.onclick=()=>{dateInput.value=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;calendar.style.display="none";};
+        if(dateInput.value==`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`) cell.classList.add("selected");
+        grid.appendChild(cell);
+    }
+    calendar.appendChild(grid);
+    document.getElementById("prev").onclick=(e)=>{e.preventDefault();e.stopPropagation();current.setMonth(current.getMonth()-1);render();};
+    document.getElementById("next").onclick=(e)=>{e.preventDefault();e.stopPropagation();if(current.getFullYear()<today.getFullYear()||(current.getFullYear()==today.getFullYear()&&current.getMonth()<today.getMonth())){current.setMonth(current.getMonth()+1);render();}};
+}
+render();
+dateInput.onclick=(e)=>{e.stopPropagation();calendar.style.display=calendar.style.display==="block"?"none":"block";};
+document.addEventListener("click",(e)=>{if(!document.querySelector(".date-wrapper").contains(e.target))calendar.style.display="none";});
+
+// Toast
+function showToast(message,type="success"){
+    const toast=document.getElementById("toast");const text=document.getElementById("toastMessage");
+    toast.classList.remove("success","error");toast.classList.add(type);text.innerText=message;
+    toast.classList.add("show");setTimeout(()=>{toast.classList.remove("show");},3000);
+}
+</script>
+
+{% with messages = get_flashed_messages() %}
+{% if messages and messages[0] != "登录成功" %}
+<script>
+window.onload=function(){showToast("{{ messages[0] }}","{{ 'success' if '成功' in messages[0] else 'error' }}");}
+</script>
+{% endif %}
+{% endwith %}
+
+<div class="beian">
+<a href="https://beian.miit.gov.cn/" target="_blank">备案号：沪ICP备2024085005号-1</a>
+</div>
+
+{% if session.logged_in and (is_admin or is_super_admin) %}
+<div style="display:none; width:0; height:0; opacity:0; pointer-events:none;">
+<iframe src="/" title="预加载首页"></iframe>
+</div>
+{% endif %}
+</body>
+</html>

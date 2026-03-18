@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+<meta charset="UTF-8">
+<title>此用户已被记录在案</title>
+<link rel="shortcut icon" href="/static/TCTD2_Icon_Phoenix_Secondary_Orange.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    background: radial-gradient(circle at top,#1b2735,#090a0f);
+    font-family:'Segoe UI',sans-serif;
+    position:relative;
+    overflow:hidden;
+}
+
+/* ===== 背景呼吸光 ===== */
+body::before{
+    content:"";
+    position:absolute;
+    width:1100px;
+    height:1100px;
+    background:radial-gradient(circle,#ff7b00 0%,transparent 60%);
+    opacity:0.15;
+    animation:breath 8s ease-in-out infinite;
+}
+
+@keyframes breath{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.2);}
+}
+
+/* ===== 主容器 ===== */
+.container{
+    width:720px;
+    max-height:85vh;
+    overflow-y:auto;
+    padding:40px;
+    border-radius:20px;
+    backdrop-filter:blur(30px) saturate(140%);
+    -webkit-backdrop-filter:blur(30px) saturate(140%);
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:
+        0 0 60px rgba(0,0,0,0.8),
+        inset 0 0 30px rgba(255,255,255,0.05);
+    color:white;
+    animation:fadeIn 0.6s ease;
+    position:relative;
+    z-index:2;
+}
+
+/* 边缘高光 */
+.container::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:20px;
+    padding:1px;
+    background:linear-gradient(135deg,rgba(255,123,0,0.6),transparent 40%);
+    -webkit-mask-image: -webkit-linear-gradient(#000, #000), -webkit-linear-gradient(#000, #000);
+    -webkit-mask-clip: content-box, border-box;
+    -webkit-mask-composite: xor;
+    mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+    mask-clip: content-box, border-box;
+    mask-composite: exclude;
+    pointer-events:none;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:translateY(20px);}
+    to{opacity:1; transform:translateY(0);}
+}
+
+h1{
+    text-align:center;
+    font-family:'Orbitron',sans-serif;
+    margin-bottom:30px;
+    color:#ff7b00;
+    letter-spacing:2px;
+    font-size:18px;
+}
+
+/* ===== 记录标题放外面 ===== */
+.record-index{
+    color:#ff7b00;
+    margin:30px 0 10px 5px;
+    font-size:14px;
+    letter-spacing:1px;
+}
+
+/* ===== 单条记录卡片 ===== */
+.record-block{
+    padding:20px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,123,0,0.25);
+    backdrop-filter:blur(20px);
+    transition:0.3s;
+    animation:slideUp 0.6s ease forwards;
+    opacity:0;
+    transform:translateY(20px);
+    position: relative;
+}
+
+/* 视频徽章样式（和 search.html 完全一致） */
+.video-badge{
+    position:absolute;
+    top:12px;
+    right:12px;
+    background:linear-gradient(135deg,#ff3b30,#ff7a18);
+    color:#fff;
+    font-size:12px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    cursor:pointer;
+    text-decoration:none;
+    transition:.2s;
+    z-index: 3;
+    font-family: "Smiley Sans", sans-serif;
+}
+.video-badge:hover{
+    background:#ff5c52;
+    transform:translateY(-1px);
+    box-shadow:0 4px 10px rgba(0,0,0,.25);
+}
+.video-badge::after{
+    content:"点击查看视频证据";
+    position:absolute;
+    top:32px;
+    right:0;
+    background:#111;
+    color:#fff;
+    padding:6px 10px;
+    border-radius:6px;
+    font-size:12px;
+    white-space:nowrap;
+    opacity:0;
+    transform:translateY(-5px);
+    transition:.2s;
+    pointer-events:none;
+    z-index: 4;
+    font-family: "Smiley Sans", sans-serif;
+}
+.video-badge:hover::after{
+    opacity:1;
+    transform:translateY(0);
+}
+
+/* 自动逐条延迟动画 */
+.record-block:nth-of-type(1){animation-delay:0.1s;}
+.record-block:nth-of-type(2){animation-delay:0.2s;}
+.record-block:nth-of-type(3){animation-delay:0.3s;}
+.record-block:nth-of-type(4){animation-delay:0.4s;}
+.record-block:nth-of-type(5){animation-delay:0.5s;}
+
+@keyframes slideUp{
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.record-block:hover{
+    border-color:#ff7b00;
+    box-shadow:
+        0 0 25px rgba(255,123,0,0.4),
+        inset 0 0 20px rgba(255,123,0,0.05);
+}
+
+/* 数据布局 */
+.record-grid{
+    display:grid;
+    grid-template-columns:140px 1fr;
+    row-gap:12px;
+    column-gap:15px;
+    font-size:14px;
+}
+
+.label{
+    color:rgba(255,123,0,0.9);
+    font-weight:500;
+}
+
+.value{
+    color:white;
+    word-break:break-word;
+}
+
+/* 分割线 */
+.divider{
+    height:1px;
+    background:linear-gradient(to right,transparent,#ff7b00,transparent);
+    margin:30px 0;
+    opacity:0.5;
+}
+
+/* ===== 按钮区域 ===== */
+.button-container{
+    margin-top:40px;
+    display:flex;
+    justify-content:center;
+    gap:60px;
+}
+
+/* 取消按钮 */
+.submit-button{
+    background:linear-gradient(90deg,#ff4d4d,#c9302c);
+    border:none;
+    border-radius:8px;
+    color:white;
+    padding:12px 25px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.submit-button:hover{
+    box-shadow:0 5px 20px rgba(255,77,77,0.6);
+    transform:translateY(-2px);
+}
+
+/* 继续按钮带流光 */
+.continue-submit-button{
+    background:linear-gradient(90deg,#ff7b00,#ff4500,#ff7b00);
+    background-size:200%;
+    border:none;
+    border-radius:8px;
+    color:white;
+    padding:12px 25px;
+    cursor:pointer;
+    transition:0.4s;
+    animation:flow 3s linear infinite;
+}
+
+@keyframes flow{
+    0%{background-position:0%;}
+    100%{background-position:200%;}
+}
+
+.continue-submit-button:hover{
+    box-shadow:0 5px 25px rgba(255,123,0,0.7);
+    transform:translateY(-2px);
+}
+
+/* 滚动条 - 隐藏大容器滚动条 */
+.container::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    -webkit-appearance: none;
+}
+.container {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
+/* ===== 🔥 隐藏卡片内部滚动条 ===== */
+.record-block::-webkit-scrollbar,
+.record-grid::-webkit-scrollbar,
+.value::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    -webkit-appearance: none;
+}
+.record-block,
+.record-grid,
+.value {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+}
+
+/* ===== 备案号底部 ===== */
+.beian{
+    margin-top:40px;
+    font-size:12px;
+    text-align:center;
+    z-index:2;
+}
+
+.beian a{
+    color:rgba(255,255,255,0.5);
+    text-decoration:none;
+}
+
+.beian a:hover{
+    color:#ff7b00;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>此用户已被记录在案 · 无需重复提交</h1>
+
+{% for index in range(0, data|length) %}
+{% set remark = data[index][3] | string %}
+{% set video_url = none %}
+{% if '[视频证据](' in remark %}
+    {% set parts = remark.split('[视频证据](') %}
+    {% set left = parts[0] %}
+    {% set right = parts[1] %}
+    {% set video_url = right.split(')')[0] %}
+    {% set clean_remark = left ~ right.split(')', 1)[1] %}
+{% else %}
+    {% set clean_remark = remark %}
+{% endif %}
+
+<div class="record-index">
+    第 {{ index + 1 }} 条记录
+</div>
+
+<div class="record-block">
+    {% if video_url %}
+    <a href="{{ video_url }}" target="_blank" class="video-badge">🎬 视频</a>
+    {% endif %}
+
+    <div class="record-grid">
+        <div class="label">游戏ID</div>
+        <div class="value">{{ data[index][0] }}</div>
+
+        <div class="label">育碧标识符(UUID)</div>
+        <div class="value">{{ data[index][1] }}</div>
+
+        <div class="label">作案类型</div>
+        <div class="value">{{ data[index][2] }}</div>
+
+        <div class="label">登记日期</div>
+        <div class="value">{{ data[index][4] }}</div>
+
+        {% if clean_remark and clean_remark.strip() %}
+        <div class="label">备注</div>
+        <div class="value">{{ clean_remark }}</div>
+        {% endif %}
+    </div>
+</div>
+
+{% if index < data|length - 1 %}
+<div class="divider"></div>
+{% endif %}
+
+{% endfor %}
+
+<form action="/continue_submit" method="post" id="myForm">
+<input type="hidden" name="name" value="{{ new_data.name }}">
+<input type="hidden" name="uuid" value="{{ new_data.uuid }}">
+<input type="hidden" name="type" value="{{ new_data.type }}">
+<input type="hidden" name="date" value="{{ new_data.date }}">
+<input type="hidden" name="remark" value="{{ new_data.remark }}">
+
+<div class="button-container">
+<button class="submit-button" onclick="cancelSubmit(event)">取消提交</button>
+<input type="submit" value="仍继续提交" name="submit" class="continue-submit-button">
+</div>
+</form>
+
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+<script>
+alert('{{ messages[0] }}');
+window.location.href = "/";
+</script>
+{% endif %}
+{% endwith %}
+
+</div>
+
+<script>
+function cancelSubmit(event){
+event.preventDefault();
+window.location.href='/record';
+}
+</script>
+
+<div class="beian">
+<a href="https://beian.miit.gov.cn/" target="_blank">
+备案号：沪ICP备2024085005号-1
+</a>
+</div>
+
+{% if session.logged_in and (is_admin or is_super_admin) %}
+<div style="display:none; width:0; height:0; opacity:0; pointer-events:none;">
+    <iframe src="/" title="预加载首页"></iframe>
+</div>
+{% endif %}
+
+</body>
+</html>

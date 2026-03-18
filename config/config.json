@@ -1,0 +1,20 @@
+{
+  "mysql": {
+    "host": "",
+    "user": "",
+    "password": "",
+    "database": "",
+    "port": 3306
+  },
+  "security": {
+    "ban_duration": 86400
+  },
+  "flask": {
+    "secret_key": ""
+  },
+  "geoip": {
+    "account_id": "",
+    "license_key": ""
+  },
+  "root_super_admin": [""]
+}
