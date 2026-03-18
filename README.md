@@ -30,6 +30,17 @@
 - `ip2region`（国内精准）
 - `GeoLite2`（国外 + ASN）
 
+---
+
+## 🗄️ IP 数据库来源
+
+本项目使用以下数据库：
+
+- **ip2region（本地解析）**  
+  👉 [https://github.com/lionsoul2014/ip2region](https://github.com/lionsoul2014/ip2region)
+
+- **MaxMind GeoIP（全球解析）**  
+  👉 [https://dev.maxmind.com/geoip/docs/databases/#official-client-apis](https://dev.maxmind.com/geoip/docs/databases/#official-client-apis)
 支持：
 
 - IPv4 / IPv6 双栈
