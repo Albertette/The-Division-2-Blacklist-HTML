@@ -403,5 +403,5 @@ MIT License
 
 # 🙌 作者
 
-- TD2 Blacklist System
-- Version: v2.0（融合增强版）
+- Albertette
+- Version: v1.0
