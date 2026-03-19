@@ -1473,6 +1473,18 @@ def search():
 @app.route("/submit", methods=["POST"])
 @check_login
 def submit():
+    # 🔥 权限校验：admin / superadmin / 拥有record页面权限的用户
+    account = session.get("account")
+    if not account:
+        flash("请先登录")
+        return redirect("/login")
+
+    # 检查是否有权限访问record页面（提交也必须满足这个权限）
+    if not check_page_access(account, "record.html"):
+        flash("无提交权限！")
+        log_action("提交拦截", f"账号:{account} 无提交/record权限", level="WARNING", status_code=403)
+        return redirect("/")
+
     if session.get("token") != request.form.get("token"):
         flash("非法请求")
         log_action("提交失败", "Token验证失败", level="WARNING", status_code=403)
@@ -1558,6 +1570,18 @@ def submit():
 @app.route("/continue_submit", methods=["POST"])
 @check_login
 def continue_submit():
+
+    # 🔥 权限校验：和 submit 保持一致
+    account = session.get("account")
+    if not account:
+        flash("请先登录")
+        return redirect("/login")
+
+    if not check_page_access(account, "record.html"):
+        flash("无强制提交权限！")
+        log_action("强制提交拦截", f"账号:{account} 无强制提交/record权限", level="WARNING", status_code=403)
+        return redirect("/")
+
     name = request.form.get("name", "").strip()
     uuid_str = request.form.get("uuid", "").strip()
     type_value = normalize_type(request.form.get("type"))
@@ -2282,6 +2306,16 @@ def api_all_ip_locations():
 @check_login
 @limiter.limit("30 per minute")
 def api_all_bans():
+    # 🔥 权限校验：必须有 search 权限 或 是管理员/超级管理员
+    account = session.get("account")
+    if not account:
+        return jsonify({"status": "error", "msg": "请先登录"}), 401
+
+    # 检查权限：search.html 页面权限 或 管理员角色
+    if not check_page_access(account, "search.html"):
+        log_action("API拦截", f"账号:{account} 无访问 /api/all_bans 权限", level="WARNING", status_code=403)
+        return jsonify({"status": "error", "msg": "无权限访问此接口"}), 403
+
     cur = mysql.connection.cursor()
     cur.execute("""
                 SELECT Name, Uuid, Type, Remark, Date
