@@ -553,7 +553,7 @@ IP 数据主要来源于：
 # 🗄️ 数据库设计
 
 ## 👤 用户表 `sys_users`
-```sql
+```mysql
 CREATE TABLE sys_users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   account VARCHAR(50) UNIQUE,
@@ -570,7 +570,7 @@ CREATE TABLE sys_users (
 ---
 
 ## 🚫 黑名单表 `td2ban`
-```sql
+```mysql
 CREATE TABLE td2ban (
   Name VARCHAR(50),
   Uuid VARCHAR(50),
